@@ -1,7 +1,11 @@
 package llib
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
+	"hash"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -17,6 +21,7 @@ func loadCryptoModule(L *lua.LState) int {
 var cryptoExports = map[string]lua.LGFunction{
 	"base64Encode": base64Encode,
 	"base64Decode": base64Decode,
+	"hmac":         hMAC,
 }
 
 func base64Encode(L *lua.LState) int {
@@ -34,5 +39,41 @@ func base64Decode(L *lua.LState) int {
 		return 0
 	}
 	L.Push(lua.LString(string(bytes)))
+	return 1
+}
+
+func hMAC(L *lua.LState) int {
+	cryptoType := L.CheckString(1)
+	key := []byte(L.CheckString(2))
+	var hm hash.Hash
+	switch cryptoType {
+	case "sha1":
+		hm = hmac.New(sha1.New, key)
+		break
+	case "sha256":
+		hm = hmac.New(sha256.New, key)
+		break
+	default:
+		L.ArgError(1, "invalid crypto type")
+		return 0
+	}
+	cryptoDates := L.CheckTable(3)
+	tbLen := cryptoDates.Len()
+	for i := 1; i <= tbLen; i++ {
+		v := cryptoDates.RawGetInt(i)
+		hm.Write([]byte(lua.LVAsString(v)))
+	}
+	retStr := string(hm.Sum(nil))
+	L.Push(lua.LString(retStr))
+
+	return 1
+}
+
+func sha256sum(L *lua.LState) int {
+	src := L.CheckString(1)
+	sum := sha256.New()
+	sum.Write([]byte(src))
+	dst := sum.Sum(nil)
+	L.Push(lua.LString(string(dst)))
 	return 1
 }

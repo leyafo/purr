@@ -1,7 +1,8 @@
 local _M = {}
+local http = require("http")
 
-_M.http = {
-  host = "http://127.0.0.1:20000"
-}
+local url = http.url
+
+_M.url = url.new("http","127.0.0.1:8000")
 
 return _M

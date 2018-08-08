@@ -33,12 +33,12 @@ func main() {
 	setPath(L)
 	llib.Loader(L)
 
-	config := loadConfiguration(L)
-	httpConfig := config.RawGetString("http").(*lua.LTable)
-	var hostName string
-	hostName = httpConfig.RawGetString("host").String()
+	//config := loadConfiguration(L)
+	//httpConfig := config.RawGetString("http").(*lua.LTable)
+	//var hostName string
+	//hostName = httpConfig.RawGetString("host").String()
 
-	llib.SetHTTPHost(hostName)
+	//llib.SetHTTPHost(hostName)
 
 	if len(args) > 2 {
 		err := L.DoFile(path.Join(luaPath, luaFile))

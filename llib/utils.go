@@ -1,6 +1,7 @@
 package llib
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	lua "github.com/yuin/gopher-lua"
@@ -13,6 +14,13 @@ func printLuaVariable(L *lua.LState) int {
 	}
 	fmt.Print("\n")
 	return 0
+}
+
+func hexStr(L *lua.LState) int {
+	src := L.CheckString(1)
+	retStr := hex.EncodeToString([]byte(src))
+	L.Push(lua.LString(retStr))
+	return 1
 }
 
 func testChecking(L *lua.LState) int {

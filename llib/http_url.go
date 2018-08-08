@@ -34,6 +34,8 @@ var urlMethods = map[string]lua.LGFunction{
 	"resolve_reference": urlResolveReference,
 	"string":            urlString,
 	"unmarshal_binary":  urlUnmarshalBinary,
+	"set_query":         urlSetQuery,
+	"set_path":          urlSetPath,
 }
 
 const luaURLTypeName = "url"
@@ -47,8 +49,19 @@ func constructURLUD(L *lua.LState, url *url.URL) *lua.LUserData {
 
 //static methods
 func newURL(L *lua.LState) int {
-	url := &url.URL{}
-	ud := constructURLUD(L, url)
+	reqURL := &url.URL{}
+	host := internalHTTPHost
+	if L.GetTop() >= 1 {
+		scheme := L.CheckString(1)
+		reqURL.Scheme = scheme
+		if L.GetTop() >= 2 {
+			reqURL.Host = L.CheckString(2)
+		} else {
+			reqURL.Host = host
+		}
+	}
+
+	ud := constructURLUD(L, reqURL)
 	L.Push(ud)
 	return 1
 }
@@ -182,5 +195,17 @@ func urlUnmarshalBinary(L *lua.LState) int {
 	if err != nil {
 		L.RaiseError("Call UnmarshalBinary error, msg is %s", err.Error())
 	}
+	return 0
+}
+
+func urlSetQuery(L *lua.LState) int {
+	urlObj := checkURL(L)
+	urlObj.RawQuery = L.CheckString(2)
+	return 0
+}
+
+func urlSetPath(L *lua.LState) int {
+	urlObj := checkURL(L)
+	urlObj.Path = L.CheckString(2)
 	return 0
 }

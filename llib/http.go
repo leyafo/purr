@@ -2,17 +2,15 @@ package llib
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 
-	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	lua "github.com/yuin/gopher-lua"
 )
-
-//HTTPHost is set server host
-var HTTPHost string
 
 func httpLoader(L *lua.LState) int {
 	//http exports are static functions
@@ -54,48 +52,79 @@ var httpExports = map[string]lua.LGFunction{
 	"delete":  httpDelete,
 }
 
+func getBody(n int, L *lua.LState) (body []byte) {
+	bodyVal := L.CheckAny(n)
+	switch bodyVal.Type() {
+	case lua.LTString:
+		lstr, _ := bodyVal.(lua.LString)
+		body = []byte(string(lstr))
+		break
+	case lua.LTTable:
+		jsonBody, err := valueToJSON(bodyVal)
+		if err != nil {
+			L.ArgError(3, "Marshal json error, msg is: "+err.Error())
+			break
+		}
+		body = jsonBody
+	default:
+		break
+	}
+	return nil
+}
+
 func doRequest(method string, L *lua.LState) int {
 	method = strings.ToUpper(method)
-	path := L.CheckString(1)
-	ud := L.CheckUserData(2)
 
-	header, ok := ud.Value.(http.Header)
+	urlUD := L.CheckUserData(1)
+	reqURL, ok := urlUD.Value.(*url.URL)
 	if !ok {
-		L.ArgError(1, "header expected")
+		L.ArgError(1, "url.URL expected")
 		return 0
 	}
-	body := L.CheckTable(3)
-	var req *http.Request
-	if method != "GET" {
-		jsonBody, err := valueToJSON(body)
-		if err != nil {
-			panic(err.Error)
-		}
-		req, _ = http.NewRequest(method, HTTPHost+path, bytes.NewReader(jsonBody))
-	} else {
-		req, _ = http.NewRequest(method, HTTPHost+path, nil)
+
+	headerUD := L.CheckUserData(2)
+	header, ok := headerUD.Value.(http.Header)
+	if !ok {
+		L.ArgError(2, "http.header expected")
+		return 0
+	}
+
+	argumentLen := L.GetTop()
+	var body []byte
+	if argumentLen == 3 {
+		body = getBody(3, L)
+	}
+
+	urlStr := reqURL.String()
+	fmt.Printf("Request URL is: %s, Method is %s\n", urlStr, method)
+	req, err := http.NewRequest(method, reqURL.String(), bytes.NewReader(body))
+	if err != nil {
+		L.RaiseError("Call http.NewRequest error, msg is %s", err.Error())
+		return 0
 	}
 	req.Header = header
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err.Error())
+		L.RaiseError("Call Do request error, msg is %s", err.Error())
+		return 0
 	}
 	defer resp.Body.Close()
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err.Error())
+		L.RaiseError("Call ioutil.ReadAll error, msg is %s", err.Error())
+		return 0
 	}
 
 	//return status code
 	L.Push(lua.LNumber(resp.StatusCode))
 
 	//return response header
-	ud = L.NewUserData()
-	ud.Value = header
-	L.SetMetatable(ud, L.GetTypeMetatable(luaHeaderTypeName))
-	L.Push(ud)
+	responseUD := L.NewUserData()
+	responseUD.Value = header
+	L.SetMetatable(responseUD, L.GetTypeMetatable(luaHeaderTypeName))
+	L.Push(responseUD)
 
 	//resturn response body
 	L.Push(lua.LString(string(respBody)))

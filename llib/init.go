@@ -12,11 +12,16 @@ func Loader(L *lua.LState) int {
 	L.SetGlobal("from_json", L.NewFunction(fromJSON))
 	L.SetGlobal("put", L.NewFunction(printLuaVariable))
 	L.SetGlobal("check", L.NewFunction(testChecking))
+	L.SetGlobal("hex", L.NewFunction(hexStr))
+	L.SetGlobal("sha256sum", L.NewFunction(sha256sum))
 
 	return 0
 }
 
+//You can set Host as test server
+var internalHTTPHost string
+
 //SetHTTPHost ...
 func SetHTTPHost(host string) {
-	HTTPHost = host
+	internalHTTPHost = host
 }

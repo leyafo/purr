@@ -1,0 +1,3 @@
+test_s3_put.go
+s3_proxy/
+test_main
