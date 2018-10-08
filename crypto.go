@@ -1,4 +1,4 @@
-package llib
+package purr
 
 import (
 	"crypto/hmac"
@@ -12,16 +12,18 @@ import (
 
 const luaCryptoModuleName = "crypto"
 
-func loadCryptoModule(L *lua.LState) int {
+func luaCryptoLoader(L *lua.LState) int {
 	mod := L.SetFuncs(L.NewTable(), cryptoExports)
 	L.Push(mod)
 	return 1
 }
 
 var cryptoExports = map[string]lua.LGFunction{
-	"base64Encode": base64Encode,
-	"base64Decode": base64Decode,
+	"base64encode": base64Encode,
+	"base64decode": base64Decode,
 	"hmac":         hMAC,
+	"sha1sum":      sha1sum,
+	"sha256sum":    sha256sum,
 }
 
 func base64Encode(L *lua.LState) int {
@@ -72,6 +74,15 @@ func hMAC(L *lua.LState) int {
 func sha256sum(L *lua.LState) int {
 	src := L.CheckString(1)
 	sum := sha256.New()
+	sum.Write([]byte(src))
+	dst := sum.Sum(nil)
+	L.Push(lua.LString(string(dst)))
+	return 1
+}
+
+func sha1sum(L *lua.LState) int {
+	src := L.CheckString(1)
+	sum := sha1.New()
 	sum.Write([]byte(src))
 	dst := sum.Sum(nil)
 	L.Push(lua.LString(string(dst)))

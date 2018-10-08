@@ -1,4 +1,4 @@
-package llib
+package purr
 
 import (
 	"encoding/hex"
@@ -11,8 +11,8 @@ func printLuaVariable(L *lua.LState) int {
 	length := L.GetTop()
 	for i := 1; i <= length; i++ {
 		printLV(0, L.Get(i))
+		fmt.Println()
 	}
-	fmt.Print("\n")
 	return 0
 }
 
@@ -33,14 +33,20 @@ func testChecking(L *lua.LState) int {
 			fmt.Println(err.Error())
 		}
 	}
-	info := fmt.Sprintf("%s:%d ", dbg.Source, dbg.CurrentLine)
+	var v3, info string
+	if L.GetTop() == 3 {
+		v3 = L.CheckString(3)
+		info = fmt.Sprintf("%s:%d [%s]", dbg.Source, dbg.CurrentLine, v3)
+	} else {
+		info = fmt.Sprintf("%s:%d ", dbg.Source, dbg.CurrentLine)
+	}
 	if v1.Type() != v2.Type() || v1 != v2 {
 		//print with red color
 		fmt.Printf("\x1b[0;31m%s %#v != %#v\tFailed\x1b[0m\n", info, v1, v2)
 		L.Push(lua.LBool(false))
 	} else {
 		//print with green color
-		fmt.Printf("\x1b[0;32m%s %v == %v\tPASS\x1b[0m\n", info, v1, v2)
+		fmt.Printf("\x1b[0;32m%s %#v == %#v\tPASS\x1b[0m\n", info, v1, v2)
 		L.Push(lua.LBool(true))
 	}
 	return 1
@@ -57,11 +63,11 @@ func printLV(level int, v lua.LValue) {
 			printLV(level+1, key)
 			fmt.Print("=> ")
 			if value.Type() == lua.LTTable {
-				fmt.Print("\n")
+				fmt.Println()
 				printLV(level+1, value)
 			} else {
 				printLV(level+1, value)
-				fmt.Print("\n")
+				fmt.Println()
 			}
 		})
 	case lua.LTUserData:

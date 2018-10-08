@@ -1,4 +1,4 @@
-package llib
+package purr
 
 import (
 	"encoding/json"
