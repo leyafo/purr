@@ -67,20 +67,20 @@ func doRequest(method string, L *lua.LState) int {
 	urlStr = interlHost + urlStr
 
 	fmt.Printf("Request URL is: %s, Method is %s\n", urlStr, method)
-	var req *http.Request
 	var err error
-	if L.GetTop() >= 2 {
-		tb := L.CheckTable(2)
-		tb.ForEach(func(k lua.LValue, val lua.LValue) {
-			req.Header.Add(k.String(), val.String())
-		})
-	}
-
+	var req *http.Request
 	if L.GetTop() == 3 {
 		body := getBody(3, L)
 		req, err = http.NewRequest(method, urlStr, body)
 	} else {
 		req, err = http.NewRequest(method, urlStr, nil)
+	}
+
+	if L.GetTop() >= 2 {
+		tb := L.CheckTable(2)
+		tb.ForEach(func(k lua.LValue, val lua.LValue) {
+			req.Header.Add(k.String(), val.String())
+		})
 	}
 
 	if err != nil {
