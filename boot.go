@@ -12,7 +12,7 @@ import (
 )
 
 //Injection set a lua fuction into lua state
-var Injection lua.LGFunction = nil
+var Injection lua.LGFunction
 
 //RunTestWithServer Running a http backend server and then load the test case script.
 func RunTestWithServer(handle http.Handler, scriptPath string) {
