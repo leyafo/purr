@@ -1,6 +1,7 @@
 package purr
 
 import (
+	"io/ioutil"
 	"os"
 
 	lua "github.com/yuin/gopher-lua"
@@ -16,8 +17,15 @@ func lOpenFile(L *lua.LState) int {
 		L.ArgError(1, err.Error())
 		return 0
 	}
+
+	b, err := ioutil.ReadAll(file)
+	if err != nil {
+		L.ArgError(1, err.Error())
+		return 0
+	}
+
 	ud := L.NewUserData()
-	ud.Value = file
+	ud.Value = b
 	L.SetMetatable(ud, L.GetTypeMetatable(luaFileTypeName))
 	L.Push(ud)
 	return 1

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 
 	"net/http"
 	"strings"
@@ -45,17 +44,13 @@ func getBody(n int, L *lua.LState) io.Reader {
 	case lua.LTUserData:
 		ud, ok := bodyVal.(*lua.LUserData)
 		if !ok {
-			L.ArgError(3, "File object expected. ")
+			L.ArgError(3, "bytes.Buffer object expected. ")
 		}
-		file, ok := ud.Value.(*os.File)
+		buf, ok := ud.Value.(*bytes.Buffer)
 		if !ok {
-			L.ArgError(3, "File object expected. ")
-		}
-		b, err := ioutil.ReadAll(file)
-		if err != nil {
 			L.ArgError(3, "File can not read")
 		}
-		return bytes.NewBuffer(b)
+		return buf
 	}
 	return nil
 }
@@ -88,8 +83,7 @@ func doRequest(method string, L *lua.LState) int {
 		return 0
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		L.RaiseError("Call Do request error, msg is %s", err.Error())
 		return 0
