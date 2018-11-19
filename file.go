@@ -1,6 +1,7 @@
 package purr
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 
@@ -24,8 +25,10 @@ func lOpenFile(L *lua.LState) int {
 		return 0
 	}
 
+	buffer := bytes.NewBuffer(b)
+
 	ud := L.NewUserData()
-	ud.Value = b
+	ud.Value = buffer
 	L.SetMetatable(ud, L.GetTypeMetatable(luaFileTypeName))
 	L.Push(ud)
 	return 1

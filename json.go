@@ -1,6 +1,7 @@
 package purr
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -28,9 +29,22 @@ func toJSON(L *lua.LState) int {
 }
 
 func fromJSON(L *lua.LState) int {
-	jstr := L.CheckString(1)
+	value := L.CheckAny(1)
 	var v interface{}
-	err := json.NewDecoder(strings.NewReader(jstr)).Decode(&v)
+	var err error
+	if value.Type() == lua.LTUserData {
+		ud, ok := value.(*lua.LUserData)
+		if !ok {
+			L.ArgError(3, "*bytes.Buffer object expected. ")
+		}
+		err = json.NewDecoder(ud.Value.(*bytes.Buffer)).Decode(&v)
+	} else if value.Type() == lua.LTString {
+		jstr := value.String()
+		err = json.NewDecoder(strings.NewReader(jstr)).Decode(&v)
+	} else {
+		L.ArgError(1, "*bytes.Buffer or string expect.")
+		return 0
+	}
 	if err != nil {
 		fmt.Println(err.Error())
 		L.Push(lua.LNil)

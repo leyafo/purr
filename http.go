@@ -48,7 +48,7 @@ func getBody(n int, L *lua.LState) io.Reader {
 		}
 		buf, ok := ud.Value.(*bytes.Buffer)
 		if !ok {
-			L.ArgError(3, "File can not read")
+			L.ArgError(3, "Buffer can not read")
 		}
 		return buf
 	}
@@ -112,9 +112,11 @@ func doRequest(method string, L *lua.LState) int {
 		responseHeader.RawSetString(k, lua.LString(str))
 	}
 	L.Push(responseHeader)
+	ud := L.NewUserData()
+	ud.Value = bytes.NewBuffer(respBody)
 
 	//resturn response body
-	L.Push(lua.LString(string(respBody)))
+	L.Push(ud)
 	return 3
 }
 
