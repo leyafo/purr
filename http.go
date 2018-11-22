@@ -42,15 +42,13 @@ func getBody(n int, L *lua.LState) io.Reader {
 		}
 		return bytes.NewReader(jsonBody)
 	case lua.LTUserData:
-		ud, ok := bodyVal.(*lua.LUserData)
+		ud := bodyVal.(*lua.LUserData)
+		reader, ok := ud.Value.(io.Reader)
 		if !ok {
-			L.ArgError(3, "bytes.Buffer object expected. ")
+			L.ArgError(3, "io.Reader interface expected.")
+			break
 		}
-		buf, ok := ud.Value.(*bytes.Buffer)
-		if !ok {
-			L.ArgError(3, "Buffer can not read")
-		}
-		return buf
+		return reader
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 func LoadModules(L *lua.LState) int {
 	L.PreloadModule("http", httpLoader)
 	L.PreloadModule(luaCryptoModuleName, luaCryptoLoader)
+	L.PreloadModule(luaBufferTypeName, luaBufferLoader)
 
 	L.SetGlobal("to_json", L.NewFunction(toJSON))
 	L.SetGlobal("from_json", L.NewFunction(fromJSON))
@@ -25,7 +26,8 @@ func LoadModules(L *lua.LState) int {
 	L.SetGlobal("timestamp", L.NewFunction(luaTimestamp))
 	L.SetGlobal("fopen", L.NewFunction(lOpenFile))
 	L.SetGlobal("fclose", L.NewFunction(lCloseFile))
-	L.SetGlobal("fsize", L.NewFunction(lCloseFile))
+	L.SetGlobal("fsize", L.NewFunction(lFileSize))
+	L.SetGlobal("fbuffer", L.NewFunction(lFileBuffer))
 
 	//for http usage
 	L.SetGlobal("PUT", L.NewFunction(httpPut))

@@ -1,7 +1,6 @@
 package purr
 
 import (
-	"bytes"
 	"io/ioutil"
 	"os"
 
@@ -19,16 +18,8 @@ func lOpenFile(L *lua.LState) int {
 		return 0
 	}
 
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		L.ArgError(1, err.Error())
-		return 0
-	}
-
-	buffer := bytes.NewBuffer(b)
-
 	ud := L.NewUserData()
-	ud.Value = buffer
+	ud.Value = file
 	L.SetMetatable(ud, L.GetTypeMetatable(luaFileTypeName))
 	L.Push(ud)
 	return 1
@@ -57,5 +48,20 @@ func lFileSize(L *lua.LState) int {
 		return 0
 	}
 	L.Push(lua.LNumber(fi.Size()))
+	return 1
+}
+
+func lFileBuffer(L *lua.LState) int {
+	f := checkFile(L)
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		L.ArgError(1, err.Error())
+		return 0
+	}
+
+	ud := L.NewUserData()
+	ud.Value = b
+	L.SetMetatable(ud, L.GetTypeMetatable(luaBufferTypeName))
+	L.Push(ud)
 	return 1
 }
